@@ -1,11 +1,14 @@
-# views.py
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
 from django.db.models import Count, Prefetch
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from .models import Survey, Question, AnswerQuestion, UserAnswer, UserSession
-from django.shortcuts import get_object_or_404
 from .serializers import SurveyListSerializer, SurveyDetailSerializer, QuestionDetailSerializer
+from .services import SurveyStatisticsService
+from .permissions import IsModerator
 
 class SurveyViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -80,3 +83,21 @@ class QuestionViewSet(viewsets.ModelViewSet):
             "answer_text": answer.title,
             "session_id": user_session.id
         })
+
+
+class SurveyStatisticsView(APIView):
+    permission_classes = [IsModerator]
+
+    def get(self, request, *args, **kwargs):
+        survey_id = request.query_params.get('survey_id')
+        if survey_id:
+            try:
+                data = SurveyStatisticsService.get_survey_stats(int(survey_id))
+            except Survey.DoesNotExist:
+                return Response(
+                    {"error": "Survey not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+        else:
+            data = SurveyStatisticsService.get_summary()
+        return Response(data)

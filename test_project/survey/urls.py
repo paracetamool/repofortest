@@ -1,6 +1,6 @@
 from rest_framework import routers
 from django.urls import path, include
-from .views import SurveyViewSet, QuestionViewSet
+from .views import SurveyViewSet, QuestionViewSet, SurveyStatisticsView
 
 router = routers.DefaultRouter()
 
@@ -10,4 +10,5 @@ router.register(r'questions', QuestionViewSet, basename='questions')
 
 urlpatterns = [
     path('api/', include(router.urls)),
+    path('api/statistics', SurveyStatisticsView.as_view(), name='survey-statistics'),
 ]
